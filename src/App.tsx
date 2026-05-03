@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, Routes, Route } from 'react-router-dom';
+import { useNavigate, Routes, Route, Navigate } from 'react-router-dom';
 import './App.css';
 import type { AppState, PortfolioHolding, DetailEntry, Credentials } from './types';
 
@@ -249,8 +249,9 @@ function App() {
     setState(s => ({ ...s, isSettingsOpen: true }));
   };
 
-  return (
+return (
     <Routes>
+      <Route path="/" element={<Navigate to="/holdings" replace />} />
       <Route path="/holdings" element={
         <div className="app">
           <nav className="sidebar" style={{ width: state.isNavExpanded ? 268 : 56 }}>
