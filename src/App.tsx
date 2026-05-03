@@ -232,7 +232,7 @@ function App() {
   const toggleNav = () => setState(s => ({ ...s, isNavExpanded: !s.isNavExpanded }));
 
   const openHoldings = async () => {
-    navigate('/');
+    navigate('/holdings');
     setState(s => ({ ...s, isSettingsOpen: false, isChartVisible: false }));
     await loadHoldings();
   };
@@ -251,7 +251,7 @@ function App() {
 
   return (
     <Routes>
-      <Route path="/" element={
+      <Route path="/holdings" element={
         <div className="app">
           <nav className="sidebar" style={{ width: state.isNavExpanded ? 268 : 56 }}>
             <button className="hamburger" onClick={toggleNav}>☰</button>
@@ -266,7 +266,7 @@ function App() {
           
           <main className="main-content">
             <header className="header">
-              <h1>Portfolio</h1>
+              <h1>Holdings</h1>
               <div className="status">{state.statusMessage}</div>
             </header>
             
