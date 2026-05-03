@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import './App.css';
 import type { AppState, PortfolioHolding, DetailEntry, Credentials } from './types';
 
-const API_BASE = 'https://api.kite.trade';
+const API_BASE = 'http://localhost:3001';
 
 function App() {
   const [state, setState] = useState<AppState>({
