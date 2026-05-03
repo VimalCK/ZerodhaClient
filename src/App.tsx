@@ -83,10 +83,13 @@ function App() {
   const apiCall = async (endpoint: string, method = 'GET', body?: string) => {
     if (!credentials?.accessToken) throw new Error('Not logged in');
     
-    const response = await fetch(`${API_BASE}${endpoint}`, {
+    const url = new URL(`${API_BASE}${endpoint}`);
+    url.searchParams.set('api_key', credentials.apiKey);
+    url.searchParams.set('access_token', credentials.accessToken);
+    
+    const response = await fetch(url.toString(), {
       method,
       headers: {
-        'Authorization': `token ${credentials.apiKey}:${credentials.accessToken}`,
         'Content-Type': 'application/x-www-form-urlencoded',
       },
       body: method === 'POST' ? body : undefined,
