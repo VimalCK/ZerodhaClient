@@ -33,6 +33,7 @@ body {
   padding: 12px;
   display: flex;
   flex-direction: column;
+  justify-content: space-between;
   transition: width 0.2s;
 }
 

@@ -257,11 +257,15 @@ return (
           <nav className="sidebar" style={{ width: state.isNavExpanded ? 268 : 56 }}>
             <button className="hamburger" onClick={toggleNav}>☰</button>
             {state.isNavExpanded && (
-              <div className="nav-items">
-                <button className="nav-item" onClick={openHoldings}>💰 Holdings</button>
-                <button className="nav-item" onClick={openSettings}>⚙️ Settings</button>
-                <button className="nav-item" onClick={logout}>👤 {state.sessionSummary}</button>
-              </div>
+              <>
+                <div className="nav-items">
+                  <button className="nav-item" onClick={openHoldings}>💰 Holdings</button>
+                </div>
+                <div className="nav-items" style={{ marginTop: 'auto' }}>
+                  <button className="nav-item" onClick={openSettings}>⚙️ Settings</button>
+                  <button className="nav-item" onClick={logout}>👤 {state.sessionSummary}</button>
+                </div>
+              </>
             )}
           </nav>
           
@@ -330,11 +334,15 @@ return (
           <nav className="sidebar" style={{ width: state.isNavExpanded ? 268 : 56 }}>
             <button className="hamburger" onClick={toggleNav}>☰</button>
             {state.isNavExpanded && (
-              <div className="nav-items">
-                <button className="nav-item" onClick={openHoldings}>💰 Holdings</button>
-                <button className="nav-item" onClick={openSettings}>⚙️ Settings</button>
-                <button className="nav-item" onClick={logout}>👤 {state.sessionSummary}</button>
-              </div>
+              <>
+                <div className="nav-items">
+                  <button className="nav-item" onClick={openHoldings}>💰 Holdings</button>
+                </div>
+                <div className="nav-items" style={{ marginTop: 'auto' }}>
+                  <button className="nav-item" onClick={openSettings}>⚙️ Settings</button>
+                  <button className="nav-item" onClick={logout}>👤 {state.sessionSummary}</button>
+                </div>
+              </>
             )}
           </nav>
           
