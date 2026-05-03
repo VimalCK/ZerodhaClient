@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate, Routes, Route } from 'react-router-dom';
 import './App.css';
 import type { AppState, PortfolioHolding, DetailEntry, Credentials } from './types';
 
 const API_BASE = 'https://api.kite.trade';
 
 function App() {
+  const navigate = useNavigate();
   const [state, setState] = useState<AppState>({
     isLoggedIn: false,
     sessionSummary: 'Not logged in',
@@ -15,7 +17,7 @@ function App() {
     quoteStatus: '',
     isChartVisible: false,
     isNavExpanded: true,
-    isSettingsOpen: false,
+    isSettingsOpen: true,
   });
 
   const [credentials, setCredentials] = useState<Credentials | null>(null);
@@ -24,6 +26,7 @@ function App() {
   const [requestToken, setRequestToken] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [autoLoginAttempted, setAutoLoginAttempted] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const saved = localStorage.getItem('credentials');
@@ -230,6 +233,7 @@ function App() {
   const toggleNav = () => setState(s => ({ ...s, isNavExpanded: !s.isNavExpanded }));
 
   const openHoldings = async () => {
+    navigate('/');
     setState(s => ({ ...s, isSettingsOpen: false, isChartVisible: false }));
     await loadHoldings();
   };
@@ -241,100 +245,126 @@ function App() {
 
   const toggleChart = () => setState(s => ({ ...s, isChartVisible: !s.isChartVisible }));
 
-  const openSettings = () => setState(s => ({ ...s, isSettingsOpen: true }));
+  const openSettings = () => {
+    navigate('/settings');
+    setState(s => ({ ...s, isSettingsOpen: true }));
+  };
 
   return (
-    <div className="app">
-      <nav className="sidebar" style={{ width: state.isNavExpanded ? 268 : 56 }}>
-        <button className="hamburger" onClick={toggleNav}>☰</button>
-        {state.isNavExpanded && (
-          <div className="nav-items">
-            <button className="nav-item" onClick={openHoldings}>💰 Holdings</button>
-            <button className="nav-item" onClick={openSettings}>⚙️ Settings</button>
-            <button className="nav-item" onClick={logout}>👤 {state.sessionSummary}</button>
-          </div>
-        )}
-      </nav>
-      
-      <main className="main-content">
-        <header className="header">
-          <h1>Portfolio</h1>
-          <div className="status">{state.statusMessage}</div>
-        </header>
-        
-        {state.isSettingsOpen ? (
-          <div className="settings-panel">
-            <h2>Zerodha Connection</h2>
-            <label>API Key</label>
-            <input placeholder="Enter API Key" value={apiKey} onChange={e => updateApiKey(e.target.value)} />
-            <label>API Secret</label>
-            <input type="password" placeholder="Enter API Secret" value={apiSecret} onChange={e => updateApiSecret(e.target.value)} />
-            <button className="btn-primary" onClick={startLogin} disabled={isLoading}>1️⃣ Open Login</button>
-            {state.isLoggedIn ? (
-              <button className="btn-danger" onClick={logout} style={{ marginLeft: 8 }}>Logout</button>
-            ) : (
-              <>
-                <label style={{ marginTop: 16, display: 'block' }}>Request Token: {requestToken || '(none)'}</label>
-                <input placeholder="Paste request_token from redirect URL" value={requestToken} onChange={e => setRequestToken(e.target.value)} />
-                <button className="btn-primary" onClick={completeLogin} disabled={isLoading}>2️⃣ Complete Login</button>
-              </>
+    <Routes>
+      <Route path="/" element={
+        <div className="app">
+          <nav className="sidebar" style={{ width: state.isNavExpanded ? 268 : 56 }}>
+            <button className="hamburger" onClick={toggleNav}>☰</button>
+            {state.isNavExpanded && (
+              <div className="nav-items">
+                <button className="nav-item" onClick={openHoldings}>💰 Holdings</button>
+                <button className="nav-item" onClick={openSettings}>⚙️ Settings</button>
+                <button className="nav-item" onClick={logout}>👤 {state.sessionSummary}</button>
+              </div>
             )}
-          </div>
-        ) : (
-          <div className="holdings-view">
-            <div className="holdings-list">
-              {state.holdings.map(h => (
-                <div key={h.instrumentKey} className={`holding-item ${state.selectedHolding?.instrumentKey === h.instrumentKey ? 'selected' : ''}`} onClick={() => selectHolding(h)}>
-                  <div className="holding-title">{h.listTitle}</div>
-                  <div className="holding-subtitle">{h.listSubtitle}</div>
-                </div>
-              ))}
-              {state.holdings.length === 0 && (
-                <div className="no-selection">Click Holdings to load your portfolio</div>
-              )}
-            </div>
+          </nav>
+          
+          <main className="main-content">
+            <header className="header">
+              <h1>Portfolio</h1>
+              <div className="status">{state.statusMessage}</div>
+            </header>
             
-            <div className="detail-panel">
-              <div className="detail-header">
-                <h3>Details</h3>
-                <button className="btn-secondary" onClick={toggleChart}>{state.isChartVisible ? '📋 Details' : '📈 Chart'}</button>
+            <div className="holdings-view">
+              <div className="holdings-list">
+                {state.holdings.map(h => (
+                  <div key={h.instrumentKey} className={`holding-item ${state.selectedHolding?.instrumentKey === h.instrumentKey ? 'selected' : ''}`} onClick={() => selectHolding(h)}>
+                    <div className="holding-title">{h.listTitle}</div>
+                    <div className="holding-subtitle">{h.listSubtitle}</div>
+                  </div>
+                ))}
+                {state.holdings.length === 0 && (
+                  <div className="no-selection">Click Holdings to load your portfolio</div>
+                )}
               </div>
               
-              {state.isChartVisible && state.selectedHolding ? (
-                <div className="chart-container">
-                  <iframe 
-                    src={`https://www.tradingview.com/widget/advanced-chart/?symbol=NSE:${state.selectedHolding.instrumentKey.replace('NSE:', '')}`}
-                    title="TradingView Chart"
-                  ></iframe>
+              <div className="detail-panel">
+                <div className="detail-header">
+                  <h3>Details</h3>
+                  <button className="btn-secondary" onClick={toggleChart}>{state.isChartVisible ? '📋 Details' : '📈 Chart'}</button>
                 </div>
-              ) : state.selectedHolding ? (
-                <div className="details">
-                  {state.selectedHolding.holdingDetails.map((d, i) => (
-                    <div key={i} className="detail-row">
-                      <span>{d.label}</span>
-                      <span>{d.value}</span>
-                    </div>
-                  ))}
-                  {state.quoteDetails.length > 0 && (
-                    <>
-                      <div className="section-title">Market Quote</div>
-                      {state.quoteDetails.map((d, i) => (
-                        <div key={i} className="detail-row">
-                          <span>{d.label}</span>
-                          <span>{d.value}</span>
-                        </div>
-                      ))}
-                    </>
-                  )}
-                </div>
+                
+                {state.isChartVisible && state.selectedHolding ? (
+                  <div className="chart-container">
+                    <iframe 
+                      src={`https://www.tradingview.com/widget/advanced-chart/?symbol=NSE:${state.selectedHolding.instrumentKey.replace('NSE:', '')}`}
+                      title="TradingView Chart"
+                    ></iframe>
+                  </div>
+                ) : state.selectedHolding ? (
+                  <div className="details">
+                    {state.selectedHolding.holdingDetails.map((d, i) => (
+                      <div key={i} className="detail-row">
+                        <span>{d.label}</span>
+                        <span>{d.value}</span>
+                      </div>
+                    ))}
+                    {state.quoteDetails.length > 0 && (
+                      <>
+                        <div className="section-title">Market Quote</div>
+                        {state.quoteDetails.map((d, i) => (
+                          <div key={i} className="detail-row">
+                            <span>{d.label}</span>
+                            <span>{d.value}</span>
+                          </div>
+                        ))}
+                      </>
+                    )}
+                  </div>
+                ) : (
+                  <div className="no-selection">Select a holding</div>
+                )}
+              </div>
+            </div>
+          </main>
+        </div>
+      } />
+      <Route path="/settings" element={
+        <div className="app">
+          <nav className="sidebar" style={{ width: state.isNavExpanded ? 268 : 56 }}>
+            <button className="hamburger" onClick={toggleNav}>☰</button>
+            {state.isNavExpanded && (
+              <div className="nav-items">
+                <button className="nav-item" onClick={openHoldings}>💰 Holdings</button>
+                <button className="nav-item" onClick={openSettings}>⚙️ Settings</button>
+                <button className="nav-item" onClick={logout}>👤 {state.sessionSummary}</button>
+              </div>
+            )}
+          </nav>
+          
+          <main className="main-content">
+            <header className="header">
+              <h1>Settings</h1>
+              <div className="status">{state.statusMessage}</div>
+            </header>
+            
+            <div className="settings-panel">
+              <h2>Zerodha Connection</h2>
+              <label>API Key</label>
+              <input placeholder="Enter API Key" value={apiKey} onChange={e => updateApiKey(e.target.value)} />
+              <label>API Secret</label>
+              <input type="password" placeholder="Enter API Secret" value={apiSecret} onChange={e => updateApiSecret(e.target.value)} />
+              <button className="btn-primary" onClick={startLogin} disabled={isLoading}>1️⃣ Open Login</button>
+              {state.isLoggedIn ? (
+                <button className="btn-danger" onClick={logout} style={{ marginLeft: 8 }}>Logout</button>
               ) : (
-                <div className="no-selection">Select a holding</div>
+                <>
+                  <label style={{ marginTop: 16, display: 'block' }}>Request Token: {requestToken || '(none)'}</label>
+                  <input placeholder="Paste request_token from redirect URL" value={requestToken} onChange={e => setRequestToken(e.target.value)} />
+                  <button className="btn-primary" onClick={completeLogin} disabled={isLoading}>2️⃣ Complete Login</button>
+                </>
               )}
             </div>
-          </div>
-        )}
-      </main>
-    </div>
+          </main>
+        </div>
+      } />
+    </Routes>
   );
 }
 
