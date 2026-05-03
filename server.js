@@ -41,8 +41,7 @@ app.get('/portfolio/holdings', async (req, res) => {
   try {
     const response = await fetch(`${API_BASE}/portfolio/holdings`, {
       headers: {
-        'Authorization': `token ${api_key}/${access_token}`,
-        'X-Kite-Version': '3',
+        'Authorization': `token ${api_key}:${access_token}`,
       },
     });
 
@@ -59,8 +58,7 @@ app.get('/quote', async (req, res) => {
   try {
     const response = await fetch(`${API_BASE}/quote?i=${i}`, {
       headers: {
-        'Authorization': `token ${api_key}/${access_token}`,
-        'X-Kite-Version': '3',
+        'Authorization': `token ${api_key}:${access_token}`,
       },
     });
 
