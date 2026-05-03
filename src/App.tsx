@@ -6,6 +6,7 @@ import type { AppState, PortfolioHolding, DetailEntry, Credentials } from './typ
 const API_BASE = 'https://api.kite.trade';
 
 function App() {
+  const navigate = useNavigate();
   const [state, setState] = useState<AppState>({
     isLoggedIn: false,
     sessionSummary: 'Not logged in',
