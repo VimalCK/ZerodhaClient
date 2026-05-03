@@ -23,6 +23,7 @@ function App() {
   const [apiSecret, setApiSecret] = useState('');
   const [requestToken, setRequestToken] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [autoLoginAttempted, setAutoLoginAttempted] = useState(false);
 
   useEffect(() => {
     const saved = localStorage.getItem('credentials');
@@ -45,9 +46,16 @@ function App() {
     if (reqToken && status === 'success') {
       setRequestToken(reqToken);
       window.history.replaceState(null, '', '/');
-      setState(s => ({ ...s, statusMessage: 'Request token received. Click Complete Login.', isSettingsOpen: true }));
+      setState(s => ({ ...s, statusMessage: 'Request token received. Auto-completing login...', isSettingsOpen: true }));
     }
   }, []);
+
+  useEffect(() => {
+    if (requestToken && apiKey && apiSecret && !autoLoginAttempted && !credentials?.accessToken) {
+      setAutoLoginAttempted(true);
+      setTimeout(() => completeLogin(), 500);
+    }
+  }, [requestToken, apiKey, apiSecret]);
 
   const saveCredentials = (creds: Credentials) => {
     localStorage.setItem('credentials', JSON.stringify(creds));
