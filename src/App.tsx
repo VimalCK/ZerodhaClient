@@ -40,8 +40,9 @@ function App() {
         }
       } catch {}
     }
+  }, []);
 
-    const fullUrl = window.location.href;
+  useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const reqToken = urlParams.get('request_token');
     const status = urlParams.get('status');
@@ -250,22 +251,25 @@ function App() {
     setState(s => ({ ...s, isSettingsOpen: true }));
   };
 
-return (
+function RedirectPage() {
+    useEffect(() => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const reqToken = urlParams.get('request_token');
+      const status = urlParams.get('status');
+      if (reqToken && status === 'success') {
+        setRequestToken(reqToken);
+        setAutoLoginAttempted(false);
+        setTimeout(() => completeLogin(), 500);
+      }
+    }, []);
+    
+    return <div className="app"><main className="main-content"><div className="status">Completing login...</div></main></div>;
+  }
+  
+  return (
     <Routes>
       <Route path="/" element={<Navigate to="/holdings" replace />} />
-      <Route path="/redirect" element={
-        (() => {
-          const urlParams = new URLSearchParams(window.location.search);
-          const reqToken = urlParams.get('request_token');
-          const status = urlParams.get('status');
-          if (reqToken && status === 'success') {
-            setRequestToken(reqToken);
-            setAutoLoginAttempted(false);
-            setTimeout(() => completeLogin(), 500);
-          }
-          return <div className="app"><main className="main-content"><div className="status">Completing login...</div></main></div>;
-        })()
-      } />
+      <Route path="/redirect" element={<RedirectPage />} />
       <Route path="/holdings" element={
         <div className="app">
           <nav className="sidebar" style={{ width: state.isNavExpanded ? 268 : 56 }}>
