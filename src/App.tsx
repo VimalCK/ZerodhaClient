@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import './App.css';
 import type { AppState, PortfolioHolding, DetailEntry, Credentials } from './types';
 
-const API_BASE = 'http://localhost:3001';
+const API_BASE = 'https://api.kite.trade';
 
 function App() {
   const [state, setState] = useState<AppState>({
@@ -83,14 +83,10 @@ function App() {
   const apiCall = async (endpoint: string, method = 'GET', body?: string) => {
     if (!credentials?.accessToken) throw new Error('Not logged in');
     
-    const url = new URL(`${API_BASE}${endpoint}`);
-    url.searchParams.set('api_key', credentials.apiKey);
-    url.searchParams.set('access_token', credentials.accessToken);
-    
-    const response = await fetch(url.toString(), {
+    const response = await fetch(`${API_BASE}${endpoint}`, {
       method,
       headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
+        'Authorization': `token ${credentials.apiKey}:${credentials.accessToken}`,
       },
       body: method === 'POST' ? body : undefined,
     });
