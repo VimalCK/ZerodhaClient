@@ -90,7 +90,6 @@ function App() {
       method,
       headers: {
         'Authorization': `token ${credentials.apiKey}:${credentials.accessToken}`,
-        'X-Kite-Version': '3',
       },
       body: method === 'POST' ? body : undefined,
     });
