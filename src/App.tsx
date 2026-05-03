@@ -3,7 +3,7 @@ import { useNavigate, Routes, Route, Navigate } from 'react-router-dom';
 import './App.css';
 import type { AppState, PortfolioHolding, DetailEntry, Credentials } from './types';
 
-const API_BASE = 'http://localhost:3001';
+const API_BASE = 'https://api.kite.trade';
 
 function App() {
   const navigate = useNavigate();
@@ -89,6 +89,7 @@ function App() {
       method,
       headers: {
         'Authorization': `token ${credentials.apiKey}:${credentials.accessToken}`,
+        'X-Kite-Version': '3',
       },
       body: method === 'POST' ? body : undefined,
     });
