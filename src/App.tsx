@@ -86,7 +86,7 @@ function App() {
     const response = await fetch(`${API_BASE}${endpoint}`, {
       method,
       headers: {
-        'Authorization': `token ${credentials.apiKey}/${credentials.accessToken}`,
+        'Authorization': `token ${credentials.apiKey}:${credentials.accessToken}`,
         'Content-Type': 'application/x-www-form-urlencoded',
       },
       body: method === 'POST' ? body : undefined,
