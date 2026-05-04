@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import './App.css';
-import type { AppState, PortfolioHolding, DetailEntry, Credentials } from './types';
+import type { Credentials, PortfolioHolding } from './types';
 
 const API_BASE = 'https://api.kite.trade';
 
@@ -9,27 +9,17 @@ function HoldingsPage() {
   const [credentials, setCredentials] = useState<Credentials | null>(null);
   const [holdings, setHoldings] = useState<PortfolioHolding[]>([]);
   const [selectedHolding, setSelectedHolding] = useState<PortfolioHolding | null>(null);
-  const [quoteDetails, setQuoteDetails] = useState<DetailEntry[]>([]);
   const [statusMessage, setStatusMessage] = useState('Click Holdings to load');
   const [isLoading, setIsLoading] = useState(false);
   const [isChartVisible, setIsChartVisible] = useState(false);
-  const [sessionSummary, setSessionSummary] = useState('Not logged in');
   const navigate = useNavigate();
-
-  const [apiKey, setApiKey] = useState('');
-  const [apiSecret, setApiSecret] = useState('');
 
   useEffect(() => {
     const saved = localStorage.getItem('credentials');
     if (saved) {
       const creds = JSON.parse(saved);
       setCredentials(creds);
-      setApiKey(creds.apiKey || '');
-      setApiSecret(creds.apiSecret || '');
-      if (creds.accessToken) {
-        setSessionSummary(creds.userName ? `${creds.userName} (${creds.userId})` : 'Signed in');
-        setStatusMessage('Session restored.');
-      }
+      if (creds.accessToken) setStatusMessage('Session active');
     }
 
     const redirectToken = localStorage.getItem('redirect_token');
@@ -41,35 +31,44 @@ function HoldingsPage() {
   }, []);
 
   const completeLogin = async (reqToken: string) => {
-    if (!apiKey || !apiSecret || !reqToken) return;
-
-    const checksum = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(apiKey + reqToken + apiSecret))
-      .then(buffer => Array.from(new Uint8Array(buffer)).map(b => b.toString(16).padStart(2, '0')).join(''));
+    if (!credentials?.apiKey || !credentials?.apiSecret) {
+      setStatusMessage('Missing credentials');
+      navigate('/settings');
+      return;
+    }
+    
+    const checksum = await crypto.subtle.digest('SHA-256', 
+      new TextEncoder().encode(credentials.apiKey + reqToken + credentials.apiSecret))
+      .then(buffer => Array.from(new Uint8Array(buffer))
+      .map(b => b.toString(16).padStart(2, '0')).join(''));
 
     try {
       const response = await fetch(`${API_BASE}/session/token`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: `api_key=${apiKey}&request_token=${reqToken}&secret=${apiSecret}&checksum=${checksum}`,
+        body: `api_key=${credentials.apiKey}&request_token=${reqToken}&secret=${credentials.apiSecret}&checksum=${checksum}`,
       });
-
       const data = await response.json();
       if (data.status === 'success') {
-        const newCreds: Credentials = { apiKey, apiSecret, accessToken: data.data.access_token, userId: data.data.user_id, userName: data.data.user_name };
+        const newCreds = { ...credentials, accessToken: data.data.access_token, userId: data.data.user_id, userName: data.data.user_name };
         localStorage.setItem('credentials', JSON.stringify(newCreds));
         setCredentials(newCreds);
-        setSessionSummary(data.data.user_id);
-        setStatusMessage('Login successful!');
+        setStatusMessage('Logged in as ' + data.data.user_id);
+      } else {
+        setStatusMessage(data.message || 'Login failed');
       }
-    } catch (e) {
-      setStatusMessage('Login failed');
+    } catch (e: any) {
+      setStatusMessage(e.message);
     }
   };
 
   const loadHoldings = async () => {
-    if (!credentials?.accessToken) return;
+    if (!credentials?.accessToken) {
+      navigate('/settings');
+      return;
+    }
     setIsLoading(true);
-    setStatusMessage('Loading...');
+    setStatusMessage('Loading holdings...');
 
     try {
       const response = await fetch(`${API_BASE}/portfolio/holdings`, {
@@ -81,7 +80,7 @@ function HoldingsPage() {
         const h: PortfolioHolding[] = data.data.map((item: any) => ({
           instrumentKey: `${item.exchange}:${item.trading_symbol}`,
           listTitle: item.trading_symbol,
-          listSubtitle: `${item.exchange} · Qty ${item.quantity} · PnL ${item.pnl}`,
+          listSubtitle: `${item.exchange} · Qty ${item.quantity}`,
           holdingDetails: [
             { label: 'Product', value: item.product },
             { label: 'Quantity', value: String(item.quantity) },
@@ -104,56 +103,110 @@ function HoldingsPage() {
   const logout = () => {
     localStorage.removeItem('credentials');
     setCredentials(null);
-    setSessionSummary('Not logged in');
     setStatusMessage('Logged out');
+    navigate('/settings');
   };
 
   return (
     <div className="app">
-      <nav className="sidebar" style={{ width: 268 }}>
-        <div className="nav-items">
-          <button className="nav-item" onClick={loadHoldings} disabled={!credentials?.accessToken}>💰 Holdings</button>
+      <aside className="sidebar">
+        <div className="sidebar-header">
+          <div className="logo"><span>Nifty</span>Trap</div>
         </div>
-        <div className="nav-items" style={{ marginTop: 'auto' }}>
-          <button className="nav-item" onClick={() => navigate('/settings')}>⚙️ Settings</button>
-          <button className="nav-item" onClick={logout}>👤 {sessionSummary}</button>
+        <nav className="nav-menu">
+          <a className="nav-item active" onClick={loadHoldings}>💰 Holdings</a>
+        </nav>
+        <div className="nav-footer">
+          <a className="nav-item" onClick={() => navigate('/settings')}>⚙️ Settings</a>
+          <a className="nav-item" onClick={logout}>👤 {credentials?.userId || 'Not logged in'}</a>
         </div>
-      </nav>
+      </aside>
 
-      <main className="main-content">
+      <main className="main">
         <header className="header">
-          <h1>Holdings</h1>
-          <div className="status">{statusMessage}</div>
+          <h1 className="header-title">Holdings</h1>
+          <span className="header-status">{statusMessage}</span>
         </header>
 
-        <div className="holdings-view">
-          <div className="holdings-list">
-            {holdings.map(h => (
-              <div key={h.instrumentKey} className={`holding-item ${selectedHolding?.instrumentKey === h.instrumentKey ? 'selected' : ''}`} onClick={() => setSelectedHolding(h)}>
-                <div className="holding-title">{h.listTitle}</div>
-                <div className="holding-subtitle">{h.listSubtitle}</div>
+        <div className="content">
+          <div className="holdings-grid">
+            <div className="card">
+              <div className="card-header">
+                <span className="card-title">Portfolio</span>
+                <button className="btn btn-primary" onClick={loadHoldings} disabled={isLoading}>
+                  {isLoading ? 'Loading...' : 'Refresh'}
+                </button>
               </div>
-            ))}
-            {holdings.length === 0 && <div className="no-selection">Click Holdings to load portfolio</div>}
-          </div>
-
-          <div className="detail-panel">
-            <div className="detail-header">
-              <h3>Details</h3>
-              <button className="btn-secondary" onClick={() => setIsChartVisible(!isChartVisible)}>{isChartVisible ? '📋 Details' : '📈 Chart'}</button>
+              <div className="card-body">
+                <div className="holdings-list">
+                  {holdings.map(h => (
+                    <div key={h.instrumentKey} 
+                      className={`holding-item ${selectedHolding?.instrumentKey === h.instrumentKey ? 'selected' : ''}`}
+                      onClick={() => setSelectedHolding(h)}>
+                      <div className="symbol">{h.listTitle}</div>
+                      <div className="meta">{h.listSubtitle}</div>
+                    </div>
+                  ))}
+                  {holdings.length === 0 && (
+                    <div className="empty">
+                      <div className="empty-icon">📊</div>
+                      <div className="empty-title">No holdings</div>
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
 
-            {isChartVisible && selectedHolding ? (
-              <div className="chart-container">
-                <iframe src={`https://www.tradingview.com/widget/advanced-chart/?symbol=NSE:${selectedHolding.instrumentKey.replace('NSE:', '')}`} title="Chart" />
+            <div className="detail-panel">
+              <div className="stats-grid">
+                <div className="stat-box">
+                  <div className="stat-label">Quantity</div>
+                  <div className="stat-value">{selectedHolding?.holdingDetails.find(d => d.label === 'Quantity')?.value || '-'}</div>
+                </div>
+                <div className="stat-box">
+                  <div className="stat-label">Avg Price</div>
+                  <div className="stat-value">{selectedHolding?.holdingDetails.find(d => d.label === 'Avg Price')?.value || '-'}</div>
+                </div>
+                <div className="stat-box">
+                  <div className="stat-label">Last Price</div>
+                  <div className="stat-value">{selectedHolding?.holdingDetails.find(d => d.label === 'Last Price')?.value || '-'}</div>
+                </div>
+                <div className="stat-box">
+                  <div className="stat-label">PnL</div>
+                  <div className="stat-value">{selectedHolding?.holdingDetails.find(d => d.label === 'PnL')?.value || '-'}</div>
+                </div>
               </div>
-            ) : selectedHolding ? (
-              <div className="details">
-                {selectedHolding.holdingDetails.map((d, i) => (
-                  <div key={i} className="detail-row"><span>{d.label}</span><span>{d.value}</span></div>
-                ))}
+
+              <div className="card">
+                <div className="card-header">
+                  <span className="card-title">{selectedHolding?.listTitle || 'Details'}</span>
+                  <button className="btn btn-secondary" onClick={() => setIsChartVisible(!isChartVisible)}>
+                    {isChartVisible ? 'Details' : 'Chart'}
+                  </button>
+                </div>
+                <div className="card-body">
+                  {isChartVisible && selectedHolding ? (
+                    <div className="chart-box">
+                      <iframe src={`https://www.tradingview.com/widget/advanced-chart/?symbol=NSE:${selectedHolding.instrumentKey.replace('NSE:', '')}`} />
+                    </div>
+                  ) : selectedHolding ? (
+                    <div className="detail-list">
+                      {selectedHolding.holdingDetails.map((d, i) => (
+                        <div key={i} className="detail-row">
+                          <span className="detail-label">{d.label}</span>
+                          <span className="detail-value">{d.value}</span>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="empty">
+                      <div className="empty-icon">📈</div>
+                      <div className="empty-title">Select a holding</div>
+                    </div>
+                  )}
+                </div>
               </div>
-            ) : <div className="no-selection">Select a holding</div>}
+            </div>
           </div>
         </div>
       </main>
@@ -166,8 +219,7 @@ function SettingsPage() {
   const [apiKey, setApiKey] = useState('');
   const [apiSecret, setApiSecret] = useState('');
   const [requestToken, setRequestToken] = useState('');
-  const [statusMessage, setStatusMessage] = useState('Enter credentials');
-  const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const [statusMessage, setStatusMessage] = useState('');
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -186,7 +238,7 @@ function SettingsPage() {
     const creds = { apiKey, apiSecret, accessToken: '', userId: '' };
     localStorage.setItem('credentials', JSON.stringify(creds));
     setCredentials(creds);
-    setStatusMessage('Credentials saved');
+    setStatusMessage('Credentials saved. Now login via Zerodha.');
   };
 
   const logout = () => {
@@ -197,33 +249,58 @@ function SettingsPage() {
 
   return (
     <div className="app">
-      <nav className="sidebar" style={{ width: 268 }}>
-        <div className="nav-items" style={{ marginTop: 'auto' }}>
-          <button className="nav-item" onClick={() => navigate('/holdings')}>💰 Holdings</button>
-          <button className="nav-item" onClick={logout}>⚙️ Settings</button>
+      <aside className="sidebar">
+        <div className="sidebar-header">
+          <div className="logo"><span>Nifty</span>Trap</div>
         </div>
-      </nav>
+        <nav className="nav-menu">
+          <a className="nav-item" onClick={() => navigate('/holdings')}>💰 Holdings</a>
+        </nav>
+        <div className="nav-footer">
+          <a className="nav-item active">⚙️ Settings</a>
+          <a className="nav-item" onClick={logout}>👤 {credentials?.userId || 'Not logged in'}</a>
+        </div>
+      </aside>
 
-      <main className="main-content">
+      <main className="main">
         <header className="header">
-          <h1>Settings</h1>
-          <div className="status">{statusMessage}</div>
+          <h1 className="header-title">Settings</h1>
+          <span className={`header-status ${statusMessage.includes('Logged') ? 'success' : ''}`}>
+            {statusMessage || 'Configure your credentials'}
+          </span>
         </header>
 
-        <div className="settings-panel">
-          <h2>Zerodha Credentials</h2>
-          <label>API Key</label>
-          <input value={apiKey} onChange={e => setApiKey(e.target.value)} placeholder="API Key" />
-          <label>API Secret</label>
-          <input type="password" value={apiSecret} onChange={e => setApiSecret(e.target.value)} placeholder="API Secret" />
-          <button className="btn-primary" onClick={saveCredentials} disabled={!apiKey || !apiSecret}>Save</button>
-          
-          <div style={{ marginTop: 24 }}>
-            <label>Request Token (from Zerodha redirect URL)</label>
-            <input value={requestToken} onChange={e => setRequestToken(e.target.value)} placeholder="Paste request_token" />
+        <div className="content">
+          <div className="card" style={{ maxWidth: 480 }}>
+            <div className="card-body">
+              <h2 style={{ marginBottom: 20 }}>Zerodha Credentials</h2>
+              
+              <div className="form-group">
+                <label className="form-label">API Key</label>
+                <input className="form-input" value={apiKey} onChange={e => setApiKey(e.target.value)} placeholder="Enter API Key" />
+              </div>
+              
+              <div className="form-group">
+                <label className="form-label">API Secret</label>
+                <input type="password" className="form-input" value={apiSecret} onChange={e => setApiSecret(e.target.value)} placeholder="Enter API Secret" />
+              </div>
+              
+              <button className="btn btn-primary btn-block" onClick={saveCredentials} disabled={!apiKey || !apiSecret}>
+                Save Credentials
+              </button>
+
+              <div style={{ marginTop: 32 }}>
+                <label className="form-label">Request Token</label>
+                <input className="form-input" value={requestToken} onChange={e => setRequestToken(e.target.value)} placeholder="Paste request_token from redirect URL" />
+              </div>
+
+              {credentials?.accessToken && (
+                <button className="btn btn-danger btn-block" onClick={logout} style={{ marginTop: 16 }}>
+                  Logout
+                </button>
+              )}
+            </div>
           </div>
-          
-          {credentials?.accessToken && <button className="btn-danger" onClick={logout} style={{ marginTop: 16 }}>Logout</button>}
         </div>
       </main>
     </div>
@@ -245,7 +322,7 @@ function App() {
     }
   }, [path]);
 
-  if (path === '/redirect') return <div>Redirecting...</div>;
+  if (path === '/redirect') return <div className="app"><div className="content"><div className="empty">Redirecting...</div></div></div>;
 
   return (
     <Routes>
@@ -256,4 +333,6 @@ function App() {
   );
 }
 
-export default App;
+export default function Root() {
+  return <BrowserRouter><App /></BrowserRouter>;
+}
