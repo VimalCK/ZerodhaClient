@@ -41,22 +41,24 @@ useEffect(() => {
       } catch {}
     }
 
-    console.log('URL:', window.location.href);
+    console.log('Full URL:', window.location.href);
+    
     const urlParams = new URLSearchParams(window.location.search);
-    const reqToken = urlParams.get('request_token');
-    const status = urlParams.get('status');
-    console.log('Token:', reqToken, 'Status:', status);
+    let reqToken = urlParams.get('request_token');
+    let status = urlParams.get('status');
+    
+    if (!reqToken && window.location.hash) {
+      const hashParams = new URLSearchParams(window.location.hash.substring(1));
+      reqToken = hashParams.get('request_token');
+      status = hashParams.get('status');
+    }
+    
+    console.log('Found token:', reqToken, 'Status:', status);
+    
     if (reqToken && status === 'success') {
-      localStorage.setItem('pending_request_token', reqToken);
       setRequestToken(reqToken);
       window.history.replaceState(null, '', '/settings');
       setState(s => ({ ...s, statusMessage: 'Request token received. Auto-completing login...', isSettingsOpen: true }));
-    } else {
-      const pendingToken = localStorage.getItem('pending_request_token');
-      if (pendingToken) {
-        setRequestToken(pendingToken);
-        localStorage.removeItem('pending_request_token');
-      }
     }
   }, []);
 
@@ -66,18 +68,6 @@ useEffect(() => {
       setTimeout(() => completeLogin(), 500);
     }
   }, [requestToken, apiKey, apiSecret]);
-
-  useEffect(() => {
-    console.log('URL:', window.location.href);
-    const urlParams = new URLSearchParams(window.location.search);
-    const reqToken = urlParams.get('request_token');
-    const status = urlParams.get('status');
-    console.log('Token:', reqToken, 'Status:', status);
-    if (reqToken && status === 'success') {
-      localStorage.setItem('pending_request_token', reqToken);
-      window.history.replaceState(null, '', '/settings');
-    }
-  }, []);
 
   const saveCredentials = (creds: Credentials) => {
     localStorage.setItem('credentials', JSON.stringify(creds));
