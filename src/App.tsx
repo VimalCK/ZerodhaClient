@@ -40,25 +40,30 @@ function App() {
         }
       } catch {}
     }
+
+    const pendingToken = localStorage.getItem('pending_request_token');
+    if (pendingToken) {
+      setRequestToken(pendingToken);
+      localStorage.removeItem('pending_request_token');
+    }
   }, []);
+
+  useEffect(() => {
+    if (requestToken && apiKey && apiSecret && !credentials?.accessToken) {
+      setAutoLoginAttempted(true);
+      setTimeout(() => completeLogin(), 500);
+    }
+  }, [requestToken, apiKey, apiSecret]);
 
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const reqToken = urlParams.get('request_token');
     const status = urlParams.get('status');
     if (reqToken && status === 'success') {
-      setRequestToken(reqToken);
+      localStorage.setItem('pending_request_token', reqToken);
       window.history.replaceState(null, '', '/settings');
-      setState(s => ({ ...s, statusMessage: 'Request token received. Auto-completing login...', isSettingsOpen: true }));
     }
   }, []);
-
-  useEffect(() => {
-    if (requestToken && apiKey && apiSecret && !autoLoginAttempted && !credentials?.accessToken) {
-      setAutoLoginAttempted(true);
-      setTimeout(() => completeLogin(), 500);
-    }
-  }, [requestToken, apiKey, apiSecret]);
 
   const saveCredentials = (creds: Credentials) => {
     localStorage.setItem('credentials', JSON.stringify(creds));
@@ -86,13 +91,10 @@ function App() {
   const apiCall = async (endpoint: string, method = 'GET', body?: string) => {
     if (!credentials?.accessToken) throw new Error('Not logged in');
     
-    const auth = `token ${credentials.apiKey}:${credentials.accessToken}`;
-    console.log('API Call:', endpoint, { auth });
-    
     const response = await fetch(`${API_BASE}${endpoint}`, {
       method,
       headers: {
-        'Authorization': auth,
+        'Authorization': `token ${credentials.apiKey}:${credentials.accessToken}`,
       },
       body: method === 'POST' ? body : undefined,
     });
@@ -253,25 +255,9 @@ function App() {
     setState(s => ({ ...s, isSettingsOpen: true }));
   };
 
-function RedirectPage() {
-    useEffect(() => {
-      const urlParams = new URLSearchParams(window.location.search);
-      const reqToken = urlParams.get('request_token');
-      const status = urlParams.get('status');
-      if (reqToken && status === 'success') {
-        setRequestToken(reqToken);
-        setAutoLoginAttempted(false);
-        setTimeout(() => completeLogin(), 500);
-      }
-    }, []);
-    
-    return <div className="app"><main className="main-content"><div className="status">Completing login...</div></main></div>;
-  }
-  
   return (
     <Routes>
       <Route path="/" element={<Navigate to="/holdings" replace />} />
-      <Route path="/redirect" element={<RedirectPage />} />
       <Route path="/holdings" element={
         <div className="app">
           <nav className="sidebar" style={{ width: state.isNavExpanded ? 268 : 56 }}>
@@ -294,6 +280,7 @@ function RedirectPage() {
               <h1>Holdings</h1>
               <div className="status">{state.statusMessage}</div>
             </header>
+            {isLoading && <div className="status" style={{color: 'var(--accent)'}}>Loading...</div>}
             
             <div className="holdings-view">
               <div className="holdings-list">
