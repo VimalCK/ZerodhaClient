@@ -6,6 +6,7 @@ import type { AppState, PortfolioHolding, DetailEntry, Credentials } from './typ
 const API_BASE = 'https://api.kite.trade';
 
 function App() {
+  console.log('App rendered, path:', window.location.pathname);
   const navigate = useNavigate();
   const [state, setState] = useState<AppState>({
     isLoggedIn: false,
@@ -281,7 +282,12 @@ useEffect(() => {
     <Routes>
       <Route path="/" element={<Navigate to="/holdings" replace />} />
       <Route path="/redirect" element={<RedirectHandler />} />
-      <Route path="/holdings" element={
+      <Route path="/holdings" element={<HoldingsPage />} />
+      <Route path="/settings" element={<SettingsPage />} />
+      <Route path="*" element={<Navigate to="/holdings" replace />} />
+    </Routes>
+  );
+}
         <div className="app">
           <nav className="sidebar" style={{ width: state.isNavExpanded ? 268 : 56 }}>
             <button className="hamburger" onClick={toggleNav}>☰</button>
