@@ -18,6 +18,7 @@
   --radius-sm: 6px;
   --radius-md: 10px;
   --radius-lg: 14px;
+  --sidebar-icon-size: 28px;
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
