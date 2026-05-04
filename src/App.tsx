@@ -272,6 +272,7 @@ useEffect(() => {
   return (
     <Routes>
       <Route path="/" element={<Navigate to="/holdings" replace />} />
+      <Route path="/redirect" element={<Navigate to="/settings" replace />} />
       <Route path="/holdings" element={
         <div className="app">
           <nav className="sidebar" style={{ width: state.isNavExpanded ? 268 : 56 }}>
