@@ -27,7 +27,7 @@ function App() {
   const [isLoading, setIsLoading] = useState(false);
   const [autoLoginAttempted, setAutoLoginAttempted] = useState(false);
 
-  useEffect(() => {
+useEffect(() => {
     const saved = localStorage.getItem('credentials');
     if (saved) {
       try {
@@ -41,10 +41,22 @@ function App() {
       } catch {}
     }
 
-    const pendingToken = localStorage.getItem('pending_request_token');
-    if (pendingToken) {
-      setRequestToken(pendingToken);
-      localStorage.removeItem('pending_request_token');
+    console.log('URL:', window.location.href);
+    const urlParams = new URLSearchParams(window.location.search);
+    const reqToken = urlParams.get('request_token');
+    const status = urlParams.get('status');
+    console.log('Token:', reqToken, 'Status:', status);
+    if (reqToken && status === 'success') {
+      localStorage.setItem('pending_request_token', reqToken);
+      setRequestToken(reqToken);
+      window.history.replaceState(null, '', '/settings');
+      setState(s => ({ ...s, statusMessage: 'Request token received. Auto-completing login...', isSettingsOpen: true }));
+    } else {
+      const pendingToken = localStorage.getItem('pending_request_token');
+      if (pendingToken) {
+        setRequestToken(pendingToken);
+        localStorage.removeItem('pending_request_token');
+      }
     }
   }, []);
 
@@ -56,9 +68,11 @@ function App() {
   }, [requestToken, apiKey, apiSecret]);
 
   useEffect(() => {
+    console.log('URL:', window.location.href);
     const urlParams = new URLSearchParams(window.location.search);
     const reqToken = urlParams.get('request_token');
     const status = urlParams.get('status');
+    console.log('Token:', reqToken, 'Status:', status);
     if (reqToken && status === 'success') {
       localStorage.setItem('pending_request_token', reqToken);
       window.history.replaceState(null, '', '/settings');
