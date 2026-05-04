@@ -189,37 +189,6 @@ function SettingsPage() {
     setStatusMessage('Credentials saved');
   };
 
-  const completeLogin = async () => {
-    if (!apiKey || !apiSecret || !requestToken) return;
-    setIsLoggingIn(true);
-    setStatusMessage('Logging in...');
-
-    const checksum = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(apiKey + requestToken + apiSecret))
-      .then(buffer => Array.from(new Uint8Array(buffer)).map(b => b.toString(16).padStart(2, '0')).join(''));
-
-    try {
-      const response = await fetch(`${API_BASE}/session/token`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: `api_key=${apiKey}&request_token=${requestToken}&secret=${apiSecret}&checksum=${checksum}`,
-      });
-      const data = await response.json();
-      if (data.status === 'success') {
-        const newCreds: Credentials = { apiKey, apiSecret, accessToken: data.data.access_token, userId: data.data.user_id, userName: data.data.user_name };
-        localStorage.setItem('credentials', JSON.stringify(newCreds));
-        setCredentials(newCreds);
-        setStatusMessage('Logged in as ' + data.data.user_id);
-        navigate('/holdings');
-      } else {
-        setStatusMessage(data.message || 'Login failed');
-      }
-    } catch (e: any) {
-      setStatusMessage(e.message);
-    } finally {
-      setIsLoggingIn(false);
-    }
-  };
-
   const logout = () => {
     localStorage.removeItem('credentials');
     setCredentials(null);
@@ -252,7 +221,6 @@ function SettingsPage() {
           <div style={{ marginTop: 24 }}>
             <label>Request Token (from Zerodha redirect URL)</label>
             <input value={requestToken} onChange={e => setRequestToken(e.target.value)} placeholder="Paste request_token" />
-            <button className="btn-primary" onClick={completeLogin} disabled={isLoggingIn || !requestToken}>Complete Login</button>
           </div>
           
           {credentials?.accessToken && <button className="btn-danger" onClick={logout} style={{ marginTop: 16 }}>Logout</button>}
