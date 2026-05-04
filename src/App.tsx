@@ -41,24 +41,12 @@ useEffect(() => {
       } catch {}
     }
 
-    console.log('Full URL:', window.location.href);
-    
-    const urlParams = new URLSearchParams(window.location.search);
-    let reqToken = urlParams.get('request_token');
-    let status = urlParams.get('status');
-    
-    if (!reqToken && window.location.hash) {
-      const hashParams = new URLSearchParams(window.location.hash.substring(1));
-      reqToken = hashParams.get('request_token');
-      status = hashParams.get('status');
-    }
-    
-    console.log('Found token:', reqToken, 'Status:', status);
-    
-    if (reqToken && status === 'success') {
-      setRequestToken(reqToken);
-      window.history.replaceState(null, '', '/settings');
-      setState(s => ({ ...s, statusMessage: 'Request token received. Auto-completing login...', isSettingsOpen: true }));
+    const redirectToken = localStorage.getItem('redirect_token');
+    if (redirectToken) {
+      console.log('Found redirect token:', redirectToken);
+      setRequestToken(redirectToken);
+      localStorage.removeItem('redirect_token');
+      setState(s => ({ ...s, isSettingsOpen: true }));
     }
   }, []);
 
@@ -267,13 +255,13 @@ useEffect(() => {
       
       if (reqToken && status === 'success') {
         console.log('Captured token:', reqToken);
-        setRequestToken(reqToken);
-        setState(s => ({ ...s, statusMessage: 'Completing login...', isSettingsOpen: true }));
-        setTimeout(() => completeLogin(), 500);
+        localStorage.setItem('redirect_token', reqToken);
+        window.history.replaceState(null, '', '/settings');
+        window.location.reload();
       }
     }, []);
     
-    return <div className="app"><main className="main-content"><div className="status">Completing login...</div></main></div>;
+    return <div className="app"><main className="main-content"><div className="status">Redirecting...</div></main></div>;
   }
   
   return (
