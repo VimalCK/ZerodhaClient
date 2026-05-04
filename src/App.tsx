@@ -118,8 +118,15 @@ function HoldingsPage() {
         </nav>
         <div className="nav-footer">
           <a className="nav-item" title="Settings" onClick={() => navigate('/settings')}>⚙️</a>
-          <a className="nav-item" title={credentials?.userId || 'Account'} onClick={logout}>
-            {credentials?.userId ? credentials.userId.slice(-2).toUpperCase() : '👤'}
+          <a className="nav-item user-btn" title={credentials?.userId || 'Account'} onClick={logout}>
+            {credentials?.userId ? (
+              <span className="user-avatar">{credentials.userId.slice(-2).toUpperCase()}</span>
+            ) : (
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                <circle cx="12" cy="7" r="4"></circle>
+              </svg>
+            )}
           </a>
         </div>
       </aside>
@@ -260,8 +267,15 @@ function SettingsPage() {
         </nav>
         <div className="nav-footer">
           <a className="nav-item" title="Settings">⚙️</a>
-          <a className="nav-item" title={credentials?.userId || 'Account'} onClick={logout}>
-            {credentials?.userId ? credentials.userId.slice(-2).toUpperCase() : '👤'}
+          <a className="nav-item user-btn" title={credentials?.userId || 'Account'} onClick={logout}>
+            {credentials?.userId ? (
+              <span className="user-avatar">{credentials.userId.slice(-2).toUpperCase()}</span>
+            ) : (
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                <circle cx="12" cy="7" r="4"></circle>
+              </svg>
+            )}
           </a>
         </div>
       </aside>
