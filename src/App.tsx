@@ -111,14 +111,14 @@ function HoldingsPage() {
     <div className="app">
       <aside className="sidebar">
         <div className="sidebar-header">
-          <div className="logo"><span>Nifty</span>Trap</div>
+          <div className="logo"><span>📈</span></div>
         </div>
         <nav className="nav-menu">
-          <a className="nav-item active" onClick={loadHoldings}>💰 Holdings</a>
+          <a className="nav-item" title="Holdings" onClick={loadHoldings}>💰</a>
         </nav>
         <div className="nav-footer">
-          <a className="nav-item" onClick={() => navigate('/settings')}>⚙️ Settings</a>
-          <a className="nav-item" onClick={logout}>👤 {credentials?.userId || 'Not logged in'}</a>
+          <a className="nav-item" title="Settings" onClick={() => navigate('/settings')}>⚙️</a>
+          <a className="nav-item" title="Logout" onClick={logout}>👤</a>
         </div>
       </aside>
 
@@ -251,14 +251,14 @@ function SettingsPage() {
     <div className="app">
       <aside className="sidebar">
         <div className="sidebar-header">
-          <div className="logo"><span>Nifty</span>Trap</div>
+          <div className="logo"><span>📈</span></div>
         </div>
         <nav className="nav-menu">
-          <a className="nav-item" onClick={() => navigate('/holdings')}>💰 Holdings</a>
+          <a className="nav-item" title="Holdings" onClick={() => navigate('/holdings')}>💰</a>
         </nav>
         <div className="nav-footer">
-          <a className="nav-item active">⚙️ Settings</a>
-          <a className="nav-item" onClick={logout}>👤 {credentials?.userId || 'Not logged in'}</a>
+          <a className="nav-item" title="Settings">⚙️</a>
+          <a className="nav-item" title="Logout" onClick={logout}>👤</a>
         </div>
       </aside>
 
