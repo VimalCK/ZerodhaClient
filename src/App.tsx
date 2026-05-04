@@ -6,7 +6,22 @@ import type { AppState, PortfolioHolding, DetailEntry, Credentials } from './typ
 const API_BASE = 'https://api.kite.trade';
 
 function App() {
-  console.log('App rendered, path:', window.location.pathname);
+  const path = window.location.pathname;
+  console.log('App path:', path);
+  
+  if (path === '/redirect') {
+    const urlParams = new URLSearchParams(window.location.search);
+    const reqToken = urlParams.get('request_token');
+    const status = urlParams.get('status');
+    console.log('Token from redirect:', reqToken, 'Status:', status);
+    
+    if (reqToken && status === 'success') {
+      localStorage.setItem('redirect_token', reqToken);
+      window.location.href = '/settings';
+      return <div>Redirecting...</div>;
+    }
+  }
+  
   const navigate = useNavigate();
   const [state, setState] = useState<AppState>({
     isLoggedIn: false,
