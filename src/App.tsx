@@ -249,19 +249,32 @@ useEffect(() => {
 
   function RedirectHandler() {
     useEffect(() => {
+      console.log('RedirectHandler running');
+      console.log('URL:', window.location.href);
+      
       const urlParams = new URLSearchParams(window.location.search);
       const reqToken = urlParams.get('request_token');
       const status = urlParams.get('status');
       
+      console.log('Token from URL:', reqToken, 'Status:', status);
+      
       if (reqToken && status === 'success') {
-        console.log('Captured token:', reqToken);
+        console.log('Saving token to localStorage:', reqToken);
         localStorage.setItem('redirect_token', reqToken);
+        
         window.history.replaceState(null, '', '/settings');
         window.location.reload();
+      } else {
+        console.log('No token found, going to settings');
+        window.history.replaceState(null, '', '/settings');
       }
     }, []);
     
-    return <div className="app"><main className="main-content"><div className="status">Redirecting...</div></main></div>;
+    return <div className="app">
+      <main className="main-content">
+        <div className="status">Redirecting... Please wait.</div>
+      </main>
+    </div>;
   }
   
   return (
