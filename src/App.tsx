@@ -119,9 +119,9 @@ function HoldingsPage() {
         <div className="nav-footer">
           <a className="nav-item" title="Settings" onClick={() => navigate('/settings')}>⚙️</a>
           <a className="nav-item" title={credentials?.userId || 'Account'} onClick={logout}>
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
-              <circle cx="12" cy="8" r="4"/>
-              <path d="M4 20c0-4 4-8 8-8s8 4 8 8" fill="currentColor"/>
+            <svg width="22" height="22" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5" fill="none">
+              <circle cx="12" cy="7" r="4"/>
+              <path d="M4 20c0-3.314 4.477-6 8-6s8 2.686 8 6" strokeLinecap="round"/>
             </svg>
           </a>
         </div>
