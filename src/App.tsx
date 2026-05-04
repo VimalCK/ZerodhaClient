@@ -165,8 +165,9 @@ function SettingsPage() {
   const [credentials, setCredentials] = useState<Credentials | null>(null);
   const [apiKey, setApiKey] = useState('');
   const [apiSecret, setApiSecret] = useState('');
-  const [statusMessage, setStatusMessage] = useState('Enter API Key');
-  const [isLoading, setIsLoading] = useState(false);
+  const [requestToken, setRequestToken] = useState('');
+  const [statusMessage, setStatusMessage] = useState('Enter credentials');
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -176,13 +177,47 @@ function SettingsPage() {
       setCredentials(creds);
       setApiKey(creds.apiKey || '');
       setApiSecret(creds.apiSecret || '');
+      if (creds.accessToken) setStatusMessage('Logged in as ' + creds.userId);
     }
   }, []);
 
-  const startLogin = async () => {
-    if (!apiKey) return;
-    window.open(`https://kite.trade/connect/login?v=3&api_key=${apiKey}`, '_blank');
-    setStatusMessage('Opened login. After login, come back here.');
+  const saveCredentials = () => {
+    if (!apiKey || !apiSecret) return;
+    const creds = { apiKey, apiSecret, accessToken: '', userId: '' };
+    localStorage.setItem('credentials', JSON.stringify(creds));
+    setCredentials(creds);
+    setStatusMessage('Credentials saved');
+  };
+
+  const completeLogin = async () => {
+    if (!apiKey || !apiSecret || !requestToken) return;
+    setIsLoggingIn(true);
+    setStatusMessage('Logging in...');
+
+    const checksum = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(apiKey + requestToken + apiSecret))
+      .then(buffer => Array.from(new Uint8Array(buffer)).map(b => b.toString(16).padStart(2, '0')).join(''));
+
+    try {
+      const response = await fetch(`${API_BASE}/session/token`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: `api_key=${apiKey}&request_token=${requestToken}&secret=${apiSecret}&checksum=${checksum}`,
+      });
+      const data = await response.json();
+      if (data.status === 'success') {
+        const newCreds: Credentials = { apiKey, apiSecret, accessToken: data.data.access_token, userId: data.data.user_id, userName: data.data.user_name };
+        localStorage.setItem('credentials', JSON.stringify(newCreds));
+        setCredentials(newCreds);
+        setStatusMessage('Logged in as ' + data.data.user_id);
+        navigate('/holdings');
+      } else {
+        setStatusMessage(data.message || 'Login failed');
+      }
+    } catch (e: any) {
+      setStatusMessage(e.message);
+    } finally {
+      setIsLoggingIn(false);
+    }
   };
 
   const logout = () => {
@@ -207,13 +242,20 @@ function SettingsPage() {
         </header>
 
         <div className="settings-panel">
-          <h2>Zerodha Connection</h2>
+          <h2>Zerodha Credentials</h2>
           <label>API Key</label>
           <input value={apiKey} onChange={e => setApiKey(e.target.value)} placeholder="API Key" />
           <label>API Secret</label>
           <input type="password" value={apiSecret} onChange={e => setApiSecret(e.target.value)} placeholder="API Secret" />
-          <button className="btn-primary" onClick={startLogin} disabled={isLoading}>1️⃣ Open Login</button>
-          {credentials?.accessToken && <button className="btn-danger" onClick={logout} style={{ marginLeft: 8 }}>Logout</button>}
+          <button className="btn-primary" onClick={saveCredentials} disabled={!apiKey || !apiSecret}>Save</button>
+          
+          <div style={{ marginTop: 24 }}>
+            <label>Request Token (from Zerodha redirect URL)</label>
+            <input value={requestToken} onChange={e => setRequestToken(e.target.value)} placeholder="Paste request_token" />
+            <button className="btn-primary" onClick={completeLogin} disabled={isLoggingIn || !requestToken}>Complete Login</button>
+          </div>
+          
+          {credentials?.accessToken && <button className="btn-danger" onClick={logout} style={{ marginTop: 16 }}>Logout</button>}
         </div>
       </main>
     </div>
