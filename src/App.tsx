@@ -86,10 +86,13 @@ function App() {
   const apiCall = async (endpoint: string, method = 'GET', body?: string) => {
     if (!credentials?.accessToken) throw new Error('Not logged in');
     
+    const auth = `token ${credentials.apiKey}:${credentials.accessToken}`;
+    console.log('API Call:', endpoint, { auth });
+    
     const response = await fetch(`${API_BASE}${endpoint}`, {
       method,
       headers: {
-        'Authorization': `token ${credentials.apiKey}:${credentials.accessToken}`,
+        'Authorization': auth,
       },
       body: method === 'POST' ? body : undefined,
     });
