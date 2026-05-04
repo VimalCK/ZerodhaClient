@@ -80,10 +80,21 @@ body {
   justify-content: center;
   border-radius: var(--radius-md);
   color: var(--text-secondary);
-  font-size: 20px;
+  font-size: 18px;
+  font-weight: 600;
   transition: all 0.15s;
   cursor: pointer;
   text-decoration: none;
+}
+
+.nav-item:hover {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+}
+
+.nav-item.active {
+  background: rgba(59, 130, 246, 0.15);
+  color: var(--accent-blue);
 }
 
 .nav-item:hover {

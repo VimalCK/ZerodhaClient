@@ -118,7 +118,9 @@ function HoldingsPage() {
         </nav>
         <div className="nav-footer">
           <a className="nav-item" title="Settings" onClick={() => navigate('/settings')}>⚙️</a>
-          <a className="nav-item" title="Logout" onClick={logout}>👤</a>
+          <a className="nav-item" title={credentials?.userId || 'Account'} onClick={logout}>
+            {credentials?.userId ? credentials.userId.slice(-2).toUpperCase() : '👤'}
+          </a>
         </div>
       </aside>
 
@@ -258,7 +260,9 @@ function SettingsPage() {
         </nav>
         <div className="nav-footer">
           <a className="nav-item" title="Settings">⚙️</a>
-          <a className="nav-item" title="Logout" onClick={logout}>👤</a>
+          <a className="nav-item" title={credentials?.userId || 'Account'} onClick={logout}>
+            {credentials?.userId ? credentials.userId.slice(-2).toUpperCase() : '👤'}
+          </a>
         </div>
       </aside>
 
